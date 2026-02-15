@@ -1,0 +1,96 @@
+-- Создание базы данных фермерской информационной системы
+DROP DATABASE IF EXISTS farmer_db;
+CREATE DATABASE farmer_db;
+USE farmer_db;
+
+-- Таблица фермеров
+CREATE TABLE farmers (
+    farmer_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    address VARCHAR(500) NOT NULL,
+    login VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('Администратор', 'Фермер') NOT NULL DEFAULT 'Фермер',
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_farmer_name (full_name)
+);
+
+-- Таблица продукции
+CREATE TABLE products (
+    product_id INT AUTO_INCREMENT PRIMARY KEY,
+    farmer_id INT NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    quantity DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    quality VARCHAR(100),
+    unit_price DECIMAL(10, 2) NOT NULL,
+    production_date DATE DEFAULT (CURRENT_DATE),
+    sold_quantity DECIMAL(10, 2) DEFAULT 0,
+    production_cost DECIMAL(10, 2) DEFAULT 0,
+    FOREIGN KEY (farmer_id) REFERENCES farmers(farmer_id) ON DELETE CASCADE,
+    INDEX idx_product_name (product_name),
+    INDEX idx_farmer_product (farmer_id, product_name)
+);
+
+-- Таблица потребностей
+CREATE TABLE needs (
+    need_id INT AUTO_INCREMENT PRIMARY KEY,
+    farmer_id INT NOT NULL,
+    need_name VARCHAR(255) NOT NULL,
+    need_type ENUM('Товар', 'Услуга') NOT NULL DEFAULT 'Товар',
+    price DECIMAL(10, 2) NOT NULL,
+    required_quantity DECIMAL(10, 2) DEFAULT 1,
+    status ENUM('Требуется', 'Закуплено', 'В процессе') DEFAULT 'Требуется',
+    purchase_date DATE,
+    notes TEXT,
+    FOREIGN KEY (farmer_id) REFERENCES farmers(farmer_id) ON DELETE CASCADE,
+    INDEX idx_need_name (need_name),
+    INDEX idx_farmer_need (farmer_id, need_name)
+);
+
+-- Администратор
+INSERT INTO farmers (full_name, address, login, password_hash, role)
+VALUES ('Администратор системы', 'Центральный офис', 'admin', SHA2('Admin123', 256), 'Администратор');
+
+-- Фермеры
+INSERT INTO farmers (full_name, address, login, password_hash, role, phone) VALUES
+('Иванов Иван Иванович', 'г. Москва, ул. Ленина, д. 1', 'ivanov', SHA2('Ivanov123', 256), 'Фермер', '79991234567'),
+('Петров Петр Петрович', 'г. Санкт-Петербург, ул. Пушкина, д. 10', 'petrov', SHA2('Petrov123', 256), 'Фермер', '79992345678'),
+('Сидорова Мария Ивановна', 'г. Казань, ул. Баумана, д. 5', 'sidorova', SHA2('Sidorova123', 256), 'Фермер', '79993456789');
+
+-- Продукция
+INSERT INTO products (farmer_id, product_name, quantity, quality, unit_price, production_cost) VALUES
+(2, 'Пшеница', 1000.5, 'Высший сорт', 25.50, 15.00),
+(2, 'Ячмень', 500.0, 'Первый сорт', 20.00, 12.50),
+(3, 'Картофель', 3000.0, 'Экстра', 15.75, 8.00),
+(3, 'Морковь', 1200.0, 'Отборная', 18.25, 10.50),
+(4, 'Говядина', 200.0, 'Премиум', 350.00, 250.00),
+(4, 'Молоко', 500.0, 'Цельное', 45.00, 30.00);
+
+-- Потребности
+INSERT INTO needs (farmer_id, need_name, need_type, price, required_quantity, status) VALUES
+(2, 'Удобрения азотные', 'Товар', 5000.00, 2.0, 'Требуется'),
+(2, 'Трактор в аренду', 'Услуга', 15000.00, 1.0, 'В процессе'),
+(3, 'Система полива', 'Товар', 25000.00, 1.0, 'Требуется'),
+(3, 'Агрономическая консультация', 'Услуга', 5000.00, 1.0, 'Закуплено'),
+(4, 'Корма для КРС', 'Товар', 30000.00, 5.0, 'Требуется'),
+(4, 'Ветеринарные услуги', 'Услуга', 8000.00, 1.0, 'В процессе');
+
+-- Проверка данных
+SELECT 'Фермеры:' AS '';
+SELECT farmer_id, full_name, role, phone FROM farmers;
+
+SELECT '\nПродукция:' AS '';
+SELECT product_id, farmer_id, product_name, quantity, unit_price FROM products;
+
+SELECT '\nПотребности:' AS '';
+SELECT need_id, farmer_id, need_name, need_type, price, status FROM needs;
+
+-- Общая статистика
+SELECT '\nОбщая статистика:' AS '';
+SELECT 'Всего фермеров' AS metric, COUNT(*) AS value FROM farmers WHERE role = 'Фермер'
+UNION ALL
+SELECT 'Всего продукции', COUNT(*) FROM products
+UNION ALL
+SELECT 'Всего потребностей', COUNT(*) FROM needs;
