@@ -83,14 +83,14 @@ class AuthRegForm(QWidget):
 
     def save_credentials(self, login, password):
         try:
-            with open(".venv/credentials.json", "w") as f:
+            with open("credentials.json", "w") as f:
                 json.dump({"login": login, "password": password}, f)
         except:
             pass
 
     def load_saved_credentials(self):
         try:
-            with open(".venv/credentials.json", "r") as f:
+            with open("credentials.json", "r") as f:
                 data = json.load(f)
                 self.login_input.setText(data.get("login", ""))
                 self.password_input.setText(data.get("password", ""))
@@ -123,8 +123,8 @@ class AuthRegForm(QWidget):
                 else:
                     try:
                         import os
-                        if os.path.exists(".venv/credentials.json"):
-                            os.remove(".venv/credentials.json")
+                        if os.path.exists("credentials.json"):
+                            os.remove("credentials.json")
                     except:
                         pass
 
